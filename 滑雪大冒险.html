@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>滑雪大冒险</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(to top, #aee2ff, #ffffff);
+    }
+
+    canvas {
+      display: block;
+      background: #87ceeb;
+    }
+
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #fff;
+      z-index: 10;
+    }
+
+    #ui button {
+      margin-right: 10px;
+      padding: 8px 12px;
+      background-color: #ff6f61;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #score {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="ui">
+    <button onclick="retryGame()">重试</button>
+    <button onclick="boost()">加速</button>
+    <div id="score">分数：0</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let speed = 3;
+    let gameOver = false;
+    const bgLayers = [];
+    const monsterTypes = ['snowman', 'yeti', 'rock'];
+    const scenes = ['forest', 'village', 'ice', 'night', 'storm', 'cliff', 'valley', 'sunset', 'snowfield', 'aurora'];
+    let currentScene = 0;
+
+    // Load character image
+    const playerImg = new Image();
+    playerImg.src = 'https://i.imgur.com/SZ8mA6T.png'; // 卡通角色图片
+
+    // Create mock parallax backgrounds
+    for (let i = 0; i < 3; i++) {
+      bgLayers.push({ x: 0, speed: speed / (i + 2) });
+    }
+
+    function drawParallax() {
+      bgLayers.forEach((layer, i) => {
+        ctx.fillStyle = `hsl(${(currentScene * 36 + i * 50) % 360}, 80%, 85%)`;
+        ctx.fillRect(layer.x, 0, canvas.width, canvas.height);
+        ctx.fillRect(layer.x + canvas.width, 0, canvas.width, canvas.height);
+        layer.x -= layer.speed;
+        if (layer.x <= -canvas.width) layer.x = 0;
+      });
+    }
+
+    function drawPlayer() {
+      ctx.drawImage(playerImg, 100, canvas.height - 150, 80, 80);
+    }
+
+    function drawObstacle() {
+      // 随机障碍物
+      ctx.fillStyle = '#5a5a5a';
+      ctx.beginPath();
+      ctx.arc(canvas.width - 200, canvas.height - 60, 30, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawScore() {
+      document.getElementById('score').innerText = '分数：' + Math.floor(score);
+    }
+
+    function playSound(name) {
+      const sounds = {
+        jump: 'https://www.myinstants.com/media/sounds/mario-jump.mp3',
+        hit: 'https://www.myinstants.com/media/sounds/smw_stomp.mp3',
+        boost: 'https://www.myinstants.com/media/sounds/smw_spin_jump.mp3'
+      };
+      const audio = new Audio(sounds[name]);
+      audio.play();
+    }
+
+    function update() {
+      if (gameOver) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawParallax();
+      drawPlayer();
+      drawObstacle();
+      drawScore();
+      score += 0.1;
+
+      // 场景切换
+      if (Math.floor(score) % 100 === 0) {
+        currentScene = (currentScene + 1) % scenes.length;
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    function retryGame() {
+      gameOver = false;
+      score = 0;
+      currentScene = 0;
+      playSound('jump');
+      update();
+    }
+
+    function boost() {
+      speed += 1;
+      playSound('boost');
+    }
+
+    retryGame();
+  </script>
+</body>
+</html>
